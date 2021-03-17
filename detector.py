@@ -73,20 +73,26 @@ def animate(i):
 		score_data.append(aux)
 	#print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)
 	
+	
 	global varIndex
-	scorePy = np.sum(data)
+	scorePy = max(score_data)
 	varData[varIndex] = 10 * np.log10(scorePy)
 	variance = np.std(varData)
 	
 	global graphIndex
 	graphData[graphIndex] = 10 * np.log10(scorePy)
-	
+	print("STD = " + str(np.round(variance,4)), "POWER = " + str(np.round(10 * np.log10(scorePy),4)))
+	print ("power < 3 STD", str(np.abs(graphData[graphIndex] - graphData[graphIndex-1])), ">", str(3*variance))
+	if np.abs(graphData[graphIndex] - graphData[graphIndex-1]) > 3 * variance:
+		ax5.plot(graphData, "C", linewidth=1.3, color='red')
+		print ("Threshold Exceeded:", str(np.abs(graphData[graphIndex]-graphData[graphIndex-1])), ">", str(3*variance))
+	else:
+		ax5.plot(graphData, "C", linewidth=1.3)
 	
 	if graphIndex != graphSize-1:
 		graphIndex += 1
 	else:
 		graphIndex = 0
-	
 	
 	if varIndex != varAcc-1:
 		varIndex += 1
@@ -100,7 +106,6 @@ def animate(i):
 	ax2.plot(freqs, specdata2, "C", linewidth=1.3)
 	ax3.plot(freqs, interleaved_data, "C", linewidth=1.3)
 	ax4.plot(freqs, multdata, "C", linewidth=1.3)
-	ax5.plot(graphData, "C", linewidth=1.3)
 
 	
 class CrossCor(tk.Tk):

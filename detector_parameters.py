@@ -42,4 +42,4 @@ freqs     = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
 dBFS      = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 # dondani parameters
-varAcc = 30
+varAcc = 10
