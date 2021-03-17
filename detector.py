@@ -12,6 +12,13 @@ from detector_parameters import *
 import calandigital as cd
 import numpy as np
 
+varData = np.zeros(varAcc)
+varIndex = 0
+
+graphIndex = 0
+graphSize = 300
+graphData = np.zeros(graphSize)
+
 LARGE_FONT = ("verdana", 12)
 style.use("bmh")
 
@@ -23,10 +30,11 @@ roach.write_int(cnt_rst_reg, 0)
 
 fig = Figure(figsize=(10, 5), dpi=100)
 fig.set_tight_layout(True)
-ax1 = fig.add_subplot(221)
-ax2 = fig.add_subplot(222)
-ax3 = fig.add_subplot(223)
-ax4 = fig.add_subplot(224)
+ax1 = fig.add_subplot(321)
+ax2 = fig.add_subplot(322)
+ax3 = fig.add_subplot(323)
+ax4 = fig.add_subplot(324)
+ax5 = fig.add_subplot(325)
 axes = [ax1, ax2, ax3, ax4]
 titles = ["Main signal", "Referece signal", "Cross-correlation magnitude", "Power multiplied"]
 
@@ -45,13 +53,13 @@ def animate(i):
 	
 	specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
 	specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
-	multdata = [specdata1[i] + specdata2[i] + (2 *31.683) for i in range(len(specdata2))]
+	multdata = [specdata1[j] + specdata2[j] + (2 *31.683) for j in range(len(specdata2))]
 	
 	data = []
 	for bram in speccross_list:
 		bramdata = struct.unpack('>256Q',roach.read(bram,2**speccross_addr_width*speccross_word_width/8))
-		for i in np.arange(0,256,2):
-			aux = bramdata[i+1] + (bramdata[i] << 64)
+		for j in np.arange(0,256,2):
+			aux = bramdata[j+1] + (bramdata[j] << 64)
 			data.append(aux)
 	interleaved_data = np.resize(data, (len(speccross_list), len(data)/len(speccross_list)))
 	interleaved_data = np.vstack(interleaved_data).reshape((-1,), order='F')
@@ -60,12 +68,31 @@ def animate(i):
 	#Score data
 	score_data = []
 	bramscore = struct.unpack('>1024Q',roach.read(score_name_bram,2**score_addr_width*score_word_width/8))
-	for i in np.arange(0,1024,2):
-		aux = bramscore[i+1] + (bramscore[i] << 64)
+	for j in np.arange(0,1024,2):
+		aux = bramscore[j+1] + (bramscore[j] << 64)
 		score_data.append(aux)
-	print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)))
-		
-		
+	#print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)
+	
+	global varIndex
+	scorePy = np.sum(data)
+	varData[varIndex] = 10 * np.log10(scorePy)
+	variance = np.std(varData)
+	
+	global graphIndex
+	graphData[graphIndex] = 10 * np.log10(scorePy)
+	
+	
+	if graphIndex != graphSize-1:
+		graphIndex += 1
+	else:
+		graphIndex = 0
+	
+	
+	if varIndex != varAcc-1:
+		varIndex += 1
+	else:
+		varIndex = 0
+	
 	for ax in axes:
 		if len(ax.lines) > 0:
 			del ax.lines[-1]
@@ -73,6 +100,7 @@ def animate(i):
 	ax2.plot(freqs, specdata2, "C", linewidth=1.3)
 	ax3.plot(freqs, interleaved_data, "C", linewidth=1.3)
 	ax4.plot(freqs, multdata, "C", linewidth=1.3)
+	ax5.plot(graphData, "C", linewidth=1.3)
 
 	
 class CrossCor(tk.Tk):

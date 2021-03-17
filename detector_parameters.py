@@ -4,7 +4,7 @@
 import numpy as np
 
 # communication parameters
-roach_ip   = '192.168.1.14'
+roach_ip   = '192.168.1.12'
 #roach_ip   = None
 boffile    = 'detv2.bof.gz'
 
@@ -40,3 +40,6 @@ acc_len    = 2**5
 nchannels = 2**spec_addr_width * len(specbrams_list[0])
 freqs     = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
 dBFS      = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
+
+# dondani parameters
+varAcc = 30
