@@ -58,7 +58,7 @@ def animate(i):
     for bram in speccross_list:
         bramdata = struct.unpack('>256Q',roach.read(bram,2**speccross_addr_width*speccross_word_width/8))
         for j in np.arange(0,256,2):
-            aux = bramdata[j+1] + (bramdata[j] << 64)
+            aux = (bramdata[j] << 64) + bramdata[j+1]
             data.append(aux)
     interleaved_data = np.resize(data, (len(speccross_list), len(data)/len(speccross_list)))
     interleaved_data = np.vstack(interleaved_data).reshape((-1,), order='F')
@@ -67,8 +67,8 @@ def animate(i):
     #Score data
     score_data = []
     bramscore = struct.unpack('>1024Q',roach.read(score_name_bram,2**score_addr_width*score_word_width/8))
-    for j in np.arange(0,1024,2):
-        aux = bramscore[j+1] + (bramscore[j] << 64)
+    for j in np.arange(0,1024,4):
+        aux = (bramscore[j] << 192) + (bramscore[j+1] << 64) + (bramscore[j+2] << 128) + bramscore[j+3]
         score_data.append(aux)
     #print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)
 
