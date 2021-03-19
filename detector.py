@@ -47,67 +47,68 @@ for ax, title in zip(axes, titles):
     ax.set_title(title)
 
 def animate(i):
-    
-	specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
-	specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
-	
-	specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
-	specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
-	multdata = [specdata1[j] + specdata2[j] + (2 *31.683) for j in range(len(specdata2))]
-	
-	data = []
-	for bram in speccross_list:
-		bramdata = struct.unpack('>256Q',roach.read(bram,2**speccross_addr_width*speccross_word_width/8))
-		for j in np.arange(0,256,2):
-			aux = bramdata[j+1] + (bramdata[j] << 64)
-			data.append(aux)
-	interleaved_data = np.resize(data, (len(speccross_list), len(data)/len(speccross_list)))
-	interleaved_data = np.vstack(interleaved_data).reshape((-1,), order='F')
-	interleaved_data = cd.scale_and_dBFS_specdata(interleaved_data, acc_len, dBFS)
-	
-	#Score data
-	score_data = []
-	bramscore = struct.unpack('>1024Q',roach.read(score_name_bram,2**score_addr_width*score_word_width/8))
-	for j in np.arange(0,1024,2):
-		aux = bramscore[j+1] + (bramscore[j] << 64)
-		score_data.append(aux)
-	#print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)
-	
-	
-	global varIndex
-	scorePy = max(score_data)
-	varData[varIndex] = 10 * np.log10(scorePy)
-	variance = np.std(varData)
-	
-	global graphIndex
-	graphData[graphIndex] = 10 * np.log10(scorePy)
-	print("STD = " + str(np.round(variance,4)), "POWER = " + str(np.round(10 * np.log10(scorePy),4)))
-	print ("power < 3 STD", str(np.abs(graphData[graphIndex] - graphData[graphIndex-1])), ">", str(3*variance))
-	if np.abs(graphData[graphIndex] - graphData[graphIndex-1]) > 3 * variance:
-		ax5.plot(graphData, "C", linewidth=1.3, color='red')
-		print ("Threshold Exceeded:", str(np.abs(graphData[graphIndex]-graphData[graphIndex-1])), ">", str(3*variance))
-	else:
-		ax5.plot(graphData, "C", linewidth=1.3)
-	
-	if graphIndex != graphSize-1:
-		graphIndex += 1
-	else:
-		graphIndex = 0
-	
-	if varIndex != varAcc-1:
-		varIndex += 1
-	else:
-		varIndex = 0
-	
-	for ax in axes:
-		if len(ax.lines) > 0:
-			del ax.lines[-1]
-	ax1.plot(freqs, specdata1, "C", linewidth=1.3)
-	ax2.plot(freqs, specdata2, "C", linewidth=1.3)
-	ax3.plot(freqs, interleaved_data, "C", linewidth=1.3)
-	ax4.plot(freqs, multdata, "C", linewidth=1.3)
 
-	
+    specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
+    specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
+    specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
+    specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+    multdata = [specdata1[j] + specdata2[j] + (2 *31.683) for j in range(len(specdata2))]
+
+    data = []
+    for bram in speccross_list:
+        bramdata = struct.unpack('>256Q',roach.read(bram,2**speccross_addr_width*speccross_word_width/8))
+        for j in np.arange(0,256,2):
+            aux = bramdata[j+1] + (bramdata[j] << 64)
+            data.append(aux)
+    interleaved_data = np.resize(data, (len(speccross_list), len(data)/len(speccross_list)))
+    interleaved_data = np.vstack(interleaved_data).reshape((-1,), order='F')
+    interleaved_data = cd.scale_and_dBFS_specdata(interleaved_data, acc_len, dBFS)
+
+    #Score data
+    score_data = []
+    bramscore = struct.unpack('>1024Q',roach.read(score_name_bram,2**score_addr_width*score_word_width/8))
+    for j in np.arange(0,1024,2):
+        aux = bramscore[j+1] + (bramscore[j] << 64)
+        score_data.append(aux)
+    #print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)
+
+
+    global varIndex
+    scorePy = max(score_data)
+    varData[varIndex] = 10 * np.log10(scorePy)
+    variance = np.std(varData)
+
+    global graphIndex
+    graphData[graphIndex] = 10 * np.log10(scorePy)
+    print("STD = " + str(np.round(variance,4)), "POWER = " + str(np.round(10 * np.log10(scorePy),4)))
+    print ("power < 3 STD", str(np.abs(graphData[graphIndex] - graphData[graphIndex-1])), ">", str(3*variance))
+    if np.abs(graphData[graphIndex] - graphData[graphIndex-1]) > 3 * variance:
+        ax5.plot(graphData, "C", linewidth=1.3, color='red')
+        print ("Threshold Exceeded:", str(np.abs(graphData[graphIndex]-graphData[graphIndex-1])), ">", str(3*variance))
+    else:
+        ax5.plot(graphData, "C", linewidth=1.3)
+
+    if graphIndex != graphSize-1:
+        graphIndex += 1
+    else:
+        graphIndex = 0
+
+    if varIndex != varAcc-1:
+        varIndex += 1
+    else:
+        varIndex = 0
+    if len(ax5.lines) > 0:
+        del ax5.lines[-1]
+
+    for ax in axes:
+        if len(ax.lines) > 0:
+            del ax.lines[-1]
+    ax1.plot(freqs, specdata1, "C", linewidth=1.3)
+    ax2.plot(freqs, specdata2, "C", linewidth=1.3)
+    ax3.plot(freqs, interleaved_data, "C", linewidth=1.3)
+    ax4.plot(freqs, multdata, "C", linewidth=1.3)
+
+
 class CrossCor(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
