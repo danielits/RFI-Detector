@@ -1,5 +1,5 @@
 import itertools
-import tkinter as tk
+import Tkinter as tk
 import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
@@ -7,8 +7,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from matplotlib import style, animation
 from detector_parameters import *
+import calandigital as cd
 
-roach = cd.initialize_roach(roach_ip, boffile=boffile, upload=True)
+# roach = cd.initialize_roach(roach_ip, boffile=boffile, upload=True)
 roach = cd.initialize_roach('192.168.1.12')
 roach.write_int(acc_len_reg, acc_len)
 roach.write_int(cnt_rst_reg, 1)
@@ -24,56 +25,37 @@ ax5 = fig.add_subplot(325)
 axes = [ax1, ax2, ax3, ax4]
 titles = ["Main signal", "Referece signal", "Cross-correlation magnitude", "Power multiplied"]
 
-line, = ax5.plot([], [], lw=2)
-xdata, ydata = [], []
-x = np.arange()
+line, = ax5.plot([], [], "C", lw=1.3)
 
+for ax, title in zip(axes, titles):
+    ax.plot([], [])
+    ax.set_xlim(0, 20)
+    ax.set_ylim(-80 - 2, 0)
+    ax.set_xlabel('Frequency [MHz]')
+    ax.set_ylabel('Power [dBFS]')
+    ax.set_title(title)
+ax5.set_ylim(-dBFS - 2, 0)
+ax5.set_xlim(0, bandwidth)
 
 def data_gen():
-    for cnt in itertools.count():
-        t = cnt / 10
-        yield t, np.sin(2*np.pi*t) * np.exp(-t/10.)
+
+    specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
+    specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
+    specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
+    specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+
+    yield specdata1, specdata2
 
 
 def init():
-    for ax, title in zip(axes, titles):
-        ax.plot([], [])
-        ax.set_xlim(0, 20)
-        ax.set_ylim(-80 - 2, 0)
-        ax.set_xlabel('Frequency [MHz]')
-        ax.set_ylabel('Power [dBFS]')
-        ax.set_title(title)
-
-    ax5.set_ylim(-1.1, 1.1)
-    ax5.set_xlim(0, 30)
-    del xdata[:]
-    del ydata[:]
-    line.set_data(xdata, ydata)
-    return line,
+    return line
 
 def run(data):
     # update the data
     t, y = data
-    xdata.append(t)
-    ydata.append(y)
-    xmin, xmax = ax5.get_xlim()
+    line.set_data(freqs, t)
 
-    if t >= xmax:
-        xmax+=1/10
-        xmin+=1/10
-        ax5.set_xlim(xmin, xmax)
-        ax5.figure.canvas.draw()
-    line.set_data(xdata, ydata)
-
-    for ax in axes:
-        if len(ax.lines) > 0:
-            del ax.lines[-1]
-    ax1.plot(freqs, specdata1, "C", linewidth=1.3)
-    ax2.plot(freqs, specdata2, "C", linewidth=1.3)
-    ax3.plot(freqs, interleaved_data, "C", linewidth=1.3)
-    ax4.plot(freqs, multdata, "C", linewidth=1.3)
-
-    return line,
+    return line
 
 class CrossCor(tk.Tk):
     def __init__(self, *args, **kwargs):

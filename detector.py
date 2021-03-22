@@ -11,6 +11,7 @@ import numpy as np
 from detector_parameters import *
 import calandigital as cd
 import numpy as np
+import math
 
 varData = np.zeros(varAcc)
 varIndex = 0
@@ -34,7 +35,7 @@ ax1 = fig.add_subplot(321)
 ax2 = fig.add_subplot(322)
 ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
-ax5 = fig.add_subplot(325)
+ax5 = fig.add_subplot(313)
 axes = [ax1, ax2, ax3, ax4]
 titles = ["Main signal", "Referece signal", "Cross-correlation magnitude", "Power multiplied"]
 
@@ -75,12 +76,12 @@ def animate(i):
 
     global varIndex
     scorePy = max(score_data)
-    varData[varIndex] = 10 * np.log10(scorePy)
+    varData[varIndex] = 10 * math.log10(scorePy)
     variance = np.std(varData)
 
     global graphIndex
-    graphData[graphIndex] = 10 * np.log10(scorePy)
-    print("STD = " + str(np.round(variance,4)), "POWER = " + str(np.round(10 * np.log10(scorePy),4)))
+    graphData[graphIndex] = 10 * math.log10(scorePy)
+    print("STD = " + str(np.round(variance,4)), "POWER = " + str(np.round(10 * math.log10(scorePy),4)))
     print ("power < 3 STD", str(np.abs(graphData[graphIndex] - graphData[graphIndex-1])), ">", str(3*variance))
     if np.abs(graphData[graphIndex] - graphData[graphIndex-1]) > 3 * variance:
         ax5.plot(graphData, "C", linewidth=1.3, color='red')
@@ -101,8 +102,7 @@ def animate(i):
         del ax5.lines[-1]
 
     for ax in axes:
-        if len(ax.lines) > 0:
-            del ax.lines[-1]
+        del ax.lines[-1]
     ax1.plot(freqs, specdata1, "C", linewidth=1.3)
     ax2.plot(freqs, specdata2, "C", linewidth=1.3)
     ax3.plot(freqs, interleaved_data, "C", linewidth=1.3)

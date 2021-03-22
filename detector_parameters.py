@@ -5,7 +5,6 @@ import numpy as np
 
 # communication parameters
 roach_ip   = '192.168.1.12'
-#roach_ip   = None
 boffile    = 'detv2.bof.gz'
 
 # model parameters
