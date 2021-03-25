@@ -26,13 +26,23 @@ ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
 ax5 = fig.add_subplot(313)
 axes = [ax1, ax2, ax3, ax4, ax5]
+titles = ["Main signal", "Referece signal", "Cross-correlation magnitude", "Cross multiplied power",
+              "Detector threshold 3 STD over 10 log10(score)"]
 lines = []
-scoredata=[]
+scoredata = []
+detdata = []
 t=[]
+datamean = []
+datastd = []
+
+tempMax = 100 # Calcular, es la altura de la linea horizontal cuando hay deteccion
 
 for ax in axes:
     line, = ax.plot([], [],'c', lw=1.3)
     lines.append(line)
+lineMean, = ax5.plot([], [],'c', lw=1.3)
+lineSTD, = ax5.plot([], [],'c', lw=1.3)
+lineDet = ax5.vlines([],0,tempMax, 'r', lw=1.3)
 
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
@@ -43,8 +53,6 @@ toolbar.update()
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
 def init():
-    titles = ["Main signal", "Referece signal", "Cross-correlation magnitude", "Cross multiplied power",
-              "Detector threshold 3 STD over log(score)"]
     for ax, title in zip(axes, titles):
         ax.set_xlim(0, bandwidth)
         ax.set_ylim(-dBFS - 2, 0)
@@ -54,7 +62,7 @@ def init():
         ax.grid()
     ax5.set_xlabel('Time')
     ax5.set_ylabel('Score')
-    ax5.set_ylim(0, 829691120*2)
+    ax5.set_ylim(0, tempMax)
     ax5.set_xlim(0, 300)
     return lines
 
@@ -84,11 +92,19 @@ def run(i):
     for j in np.arange(0, 1024, 2):
         aux = (bramscore[j] << 0) + bramscore[j + 1]
         scorelist.append(aux)
-    # print('Score FPGA: ' + str(max(score_data)) +', Score Python: ' + str(np.sum(data)
     score = np.mean(scorelist)
+    score = 10 * np.log10(score)
     scoredata.append(score)
     t.append(i)
 
+    # Mean and STD calculations
+    meanScore = np.mean(scoredata[-meanAcc:])
+    stdScore = np.std(scoredata[-meanAcc:])
+
+    # Data to plot detections
+    if (abs(score - meanScore) > threshFactor * stdScore):
+        detdata.append([[i,0],[i,tempMax]])
+    # print("Detection decision: " + str(np.round(abs(score - meanScore),4)) + " > 3 * " + str(np.round(stdScore,4)))
 
     # Update fig lines
     lines[0].set_data(freqs, specdata1)
@@ -96,13 +112,12 @@ def run(i):
     lines[2].set_data(freqs, crossdata)
     lines[3].set_data(freqs, multdata)
     lines[4].set_data(t, scoredata)
+    lineDet.set_segments(detdata)
 
     #Updating ax5 horizontal limits
     if i > 300:
         ax5.set_xlim(i-300, i)
-
     return lines
-
 
 ani = animation.FuncAnimation(fig, run, interval=10, init_func=init)
 root.mainloop()
