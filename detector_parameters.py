@@ -42,4 +42,5 @@ dBFS      = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 # dondani parameters
 meanAcc = 2**4
-threshFactor = 3
+threshFactor = 2
+tempMax = 100 # Calcular, es la altura de la linea horizontal cuando hay deteccion
