@@ -38,9 +38,10 @@ acc_len    = 2**5
 # derivative parameters
 nchannels = 2**spec_addr_width * len(specbrams_list[0])
 freqs     = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
+freqs = np.delete(freqs, len(freqs) / 2)
 dBFS      = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 # dondani parameters
 meanAcc = 2**4
 threshFactor = 2
-tempMax = 100 # Calcular, es la altura de la linea horizontal cuando hay deteccion
+tempMax = 160 # Calcular, es la altura de la linea horizontal cuando hay deteccion

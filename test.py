@@ -59,7 +59,7 @@ def init():
         ax.grid()
     ax5.set_xlabel('Time')
     ax5.set_ylabel('Score')
-    ax5.set_ylim(0, tempMax)
+    ax5.set_ylim(40, tempMax)
     ax5.set_xlim(0, 600)
     return lines
 
@@ -70,9 +70,11 @@ def run(i):
     specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
     specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
     specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+    specdata1 = np.delete(specdata1, len(specdata1) / 2)
+    specdata2 = np.delete(specdata2, len(specdata2) / 2)
 
     # Get cross-correlation and power multiplied data
-    multdata = [(specdata1[j] + specdata2[j])/2 -5 for j in range(len(specdata2))]
+    multdata = [(specdata1[j] + specdata2[j])/2 -5 for j in range(len(specdata1))]
     crossdata = []
     for bram in speccross_list:
         bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
@@ -82,6 +84,7 @@ def run(i):
     crossdata = np.resize(crossdata, (len(speccross_list), len(crossdata) / len(speccross_list)))
     crossdata = np.vstack(crossdata).reshape((-1,), order='F')
     crossdata = np.sqrt(crossdata)
+    crossdata = np.delete(crossdata, len(crossdata) / 2)
     crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
 
     # Score data
