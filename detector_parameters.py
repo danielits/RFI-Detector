@@ -29,7 +29,7 @@ specbrams_list = [['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3',
                   ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3', 
                    'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']]
                    
-speccross_list = ['dout2_0', 'dout2_1', 'dout2_2', 'dout2_3', 
+crossbrams_list = ['dout2_0', 'dout2_1', 'dout2_2', 'dout2_3',
                    'dout2_4', 'dout2_5', 'dout2_6', 'dout2_7']
 
 # experiment parameters

@@ -56,12 +56,12 @@ def animate(i):
     multdata = [specdata1[j] + specdata2[j] + (2 *31.683) for j in range(len(specdata2))]
 
     data = []
-    for bram in speccross_list:
+    for bram in crossbrams_list:
         bramdata = struct.unpack('>256Q',roach.read(bram,2**speccross_addr_width*speccross_word_width/8))
         for j in np.arange(0,256,2):
             aux = (bramdata[j] << 64) + bramdata[j+1]
             data.append(aux)
-    interleaved_data = np.resize(data, (len(speccross_list), len(data)/len(speccross_list)))
+    interleaved_data = np.resize(data, (len(crossbrams_list), len(data) / len(crossbrams_list)))
     interleaved_data = np.vstack(interleaved_data).reshape((-1,), order='F')
     interleaved_data = cd.scale_and_dBFS_specdata(interleaved_data, acc_len, dBFS)
 

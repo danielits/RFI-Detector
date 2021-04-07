@@ -76,12 +76,12 @@ def run(i):
     # Get cross-correlation and power multiplied data
     multdata = [(specdata1[j] + specdata2[j])/2 -5 for j in range(len(specdata1))]
     crossdata = []
-    for bram in speccross_list:
+    for bram in crossbrams_list:
         bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
         for j in np.arange(0, 256, 2):
             aux = (bramdata[j] << 64) + bramdata[j + 1]
             crossdata.append(aux)
-    crossdata = np.resize(crossdata, (len(speccross_list), len(crossdata) / len(speccross_list)))
+    crossdata = np.resize(crossdata, (len(crossbrams_list), len(crossdata) / len(crossbrams_list)))
     crossdata = np.vstack(crossdata).reshape((-1,), order='F')
     crossdata = np.sqrt(crossdata)
     crossdata = np.delete(crossdata, len(crossdata) / 2)
