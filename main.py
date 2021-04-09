@@ -26,7 +26,7 @@ ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
 ax5 = fig.add_subplot(313)
 axes = [ax1, ax2, ax3, ax4, ax5]
-titles = ["Main signal", "Referece signal", "Cross-correlation magnitude", "Cross multiplied power",
+titles = ["Primary signal", "Reference signal", "Cross-correlation magnitude", "Cross multiplied density power",
           "Detector threshold 3 STD over 10 log10(score)"]
 lines = []
 scoredata = []
@@ -65,7 +65,7 @@ def init():
 
 
 def run(i):
-    # Get data spectrometers
+    # Get spectrometers data
     specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
     specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
     specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
@@ -74,7 +74,7 @@ def run(i):
     specdata2 = np.delete(specdata2, len(specdata2) / 2)
 
     # Get cross-correlation and power multiplied data
-    multdata = [(specdata1[j] + specdata2[j])/2 -5 for j in range(len(specdata1))]
+    multdata = [(specdata1[j] + specdata2[j]) / 2 - 5 for j in range(len(specdata1))]
     crossdata = []
     for bram in crossbrams_list:
         bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
@@ -87,7 +87,7 @@ def run(i):
     crossdata = np.delete(crossdata, len(crossdata) / 2)
     crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
 
-    # Score data
+    # Get score data
     bramscore = struct.unpack('>1024Q', roach.read(score_name_bram, 2 ** score_addr_width * score_word_width / 8))
     scorelist = []
     for j in np.arange(0, 1024, 2):
@@ -102,7 +102,7 @@ def run(i):
     meanScore = np.mean(scoredata[-meanAcc:])
     stdScore = np.std(scoredata[-meanAcc:])
 
-    # Data to plot detections
+    # Data to detection plot
     if abs(score - meanScore) > threshFactor * stdScore:
         detdata.append([[i, 0], [i, tempMax]])
     # print("Detection decision: " + str(np.round(abs(score - meanScore),4)) + " > 3 * " + str(np.round(stdScore,4)))
@@ -115,7 +115,7 @@ def run(i):
     lines[4].set_data(t, scoredata)
     lineDet.set_segments(detdata)
 
-    # Updating ax5 horizontal limits
+    # Updating detection plot horizontal limits
     if i > 600:
         ax5.set_xlim(i - 600, i)
     return lines

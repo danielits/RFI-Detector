@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip   = '192.168.1.12'
-boffile    = 'detv2.bof.gz'
+boffile    = 'detv3.bof.gz'
 
 # model parameters
 adc_bits        = 8
