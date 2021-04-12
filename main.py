@@ -94,7 +94,6 @@ def run(i):
         aux = (bramscore[j] << 0) + bramscore[j + 1]
         scorelist.append(aux)
     score = np.mean(scorelist)
-    score = 10 * np.log10(score)
     scoredata.append(score)
     t.append(i)
 
@@ -112,7 +111,7 @@ def run(i):
     lines[1].set_data(freqs, specdata2)
     lines[2].set_data(freqs, crossdata)
     lines[3].set_data(freqs, multdata)
-    lines[4].set_data(t, scoredata)
+    lines[4].set_data(t, 10 * np.log10(scoredata))
     lineDet.set_segments(detdata)
 
     # Updating detection plot horizontal limits

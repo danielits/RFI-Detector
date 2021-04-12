@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip   = '192.168.1.12'
-boffile    = 'detv3.bof.gz'
+boffile    = 'detector_v2_morebits2.bof.gz'
 
 # model parameters
 adc_bits        = 8
@@ -43,5 +43,5 @@ dBFS      = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 # dondani parameters
 meanAcc = 2**4
-threshFactor = 2
+threshFactor = 5
 tempMax = 160 # Calcular, es la altura de la linea horizontal cuando hay deteccion
