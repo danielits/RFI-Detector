@@ -26,7 +26,7 @@ ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
 ax5 = fig.add_subplot(313)
 axes = [ax1, ax2, ax3, ax4, ax5]
-titles = ["Primary signal", "Reference signal", "Cross-correlation magnitude", "Cross multiplied density power",
+titles = ["Primary signal", "Reference signal", "Cross-correlation magnitude after integration", "Cross multiplied density power (same as cross-corr mag before integration)",
           "Detector threshold 3 STD over 10 log10(score)"]
 lines = []
 scoredata = []
@@ -36,8 +36,6 @@ t = []
 for ax in axes:
     line, = ax.plot([], [], 'c', lw=1.3)
     lines.append(line)
-lineMean, = ax5.plot([], [], 'c', lw=1.3)
-lineSTD, = ax5.plot([], [], 'c', lw=1.3)
 lineDet = ax5.vlines([], 0, tempMax, 'r', lw=1.3)
 
 canvas = FigureCanvasTkAgg(fig, master=root)
@@ -59,7 +57,7 @@ def init():
         ax.grid()
     ax5.set_xlabel('Time')
     ax5.set_ylabel('Score')
-    ax5.set_ylim(40, tempMax)
+    ax5.set_ylim(0, tempMax)
     ax5.set_xlim(0, 600)
     return lines
 
