@@ -1,18 +1,19 @@
 import matplotlib
-import time
 import struct
+
+import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import Tkinter as tk
-import matplotlib.animation as animation
-from matplotlib import style, animation
-import numpy as np
+from matplotlib import animation
 from detector_parameters import *
 import calandigital as cd
+import math
+
 matplotlib.use("TkAgg")
 
 roach = cd.initialize_roach(roach_ip, boffile=boffile, upload=True)
-# roach = cd.initialize_roach('192.168.1.12')
+# roach = cd.initialize_roach('192.168.1.12')+
 roach.write_int(acc_len_reg, acc_len)
 roach.write_int(cnt_rst_reg, 1)
 roach.write_int(cnt_rst_reg, 0)
@@ -26,8 +27,11 @@ ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
 ax5 = fig.add_subplot(313)
 axes = [ax1, ax2, ax3, ax4, ax5]
-titles = ["Primary signal", "Reference signal", "Cross-correlation magnitude after integration", "Cross multiplied density power (same as cross-corr mag before integration)",
-          "Detector threshold 3 STD over 10 log10(score)"]
+titles = ["Primary signal",
+          "Reference signal",
+          "Cross-correlation magnitude after integration",
+          "CPSD magnitude before integration (same as multiplied density power)",
+          "Total cross-correlated power"]
 lines = []
 scoredata = []
 detdata = []
@@ -72,7 +76,7 @@ def run(i):
     specdata2 = np.delete(specdata2, len(specdata2) / 2)
 
     # Get cross-correlation and power multiplied data
-    multdata = [(specdata1[j] + specdata2[j]) / 2 - 5 for j in range(len(specdata1))]
+    multdata = [(specdata1[j] + specdata2[j]) / 2 for j in range(len(specdata1))]
     crossdata = []
     for bram in crossbrams_list:
         bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
@@ -81,9 +85,21 @@ def run(i):
             crossdata.append(aux)
     crossdata = np.resize(crossdata, (len(crossbrams_list), len(crossdata) / len(crossbrams_list)))
     crossdata = np.vstack(crossdata).reshape((-1,), order='F')
-    crossdata = np.sqrt(crossdata)
+
+    crossdata = [math.sqrt(crossdata[j]) for j in range(len(crossdata))]
     crossdata = np.delete(crossdata, len(crossdata) / 2)
     crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
+
+    # Get real and imaginary data  of integrated cross-correlation
+    crossre = cd.read_interleave_data(roach, reimbrams_list[0], spec_addr_width, spec_word_width, '>i8')
+    crossim = cd.read_interleave_data(roach, reimbrams_list[1], spec_addr_width, spec_word_width, '>i8')
+    crossre = np.delete(crossre, len(crossre) / 2)
+    crossim = np.delete(crossim, len(crossim) / 2)
+    asd = np.power(crossre, 2) + np.power(crossim, 2)
+    asd = [math.sqrt(asd[j]) for j in range(len(crossdata))]
+    asd = np.asarray(asd)
+    # asd = asd / acc_len
+    asd = cd.scale_and_dBFS_specdata(asd, acc_len, dBFS)
 
     # Get score data
     bramscore = struct.unpack('>1024Q', roach.read(score_name_bram, 2 ** score_addr_width * score_word_width / 8))
