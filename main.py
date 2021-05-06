@@ -70,13 +70,10 @@ def run(i):
     # Get spectrometers data
     specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
     specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
-    specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
-    specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
     specdata1 = np.delete(specdata1, len(specdata1) / 2)
     specdata2 = np.delete(specdata2, len(specdata2) / 2)
 
-    # Get cross-correlation and power multiplied data
-    multdata = [(specdata1[j] + specdata2[j]) / 2 for j in range(len(specdata1))]
+    # Get cross-correlation and **power multiplied data**
     crossdata = []
     for bram in crossbrams_list:
         bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
@@ -88,18 +85,16 @@ def run(i):
 
     crossdata = [math.sqrt(crossdata[j]) for j in range(len(crossdata))]
     crossdata = np.delete(crossdata, len(crossdata) / 2)
-    crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
 
-    # Get real and imaginary data  of integrated cross-correlation
-    crossre = cd.read_interleave_data(roach, reimbrams_list[0], spec_addr_width, spec_word_width, '>i8')
-    crossim = cd.read_interleave_data(roach, reimbrams_list[1], spec_addr_width, spec_word_width, '>i8')
-    crossre = np.delete(crossre, len(crossre) / 2)
-    crossim = np.delete(crossim, len(crossim) / 2)
-    asd = np.power(crossre, 2) + np.power(crossim, 2)
-    asd = [math.sqrt(asd[j]) for j in range(len(crossdata))]
-    asd = np.asarray(asd)
-    # asd = asd / acc_len
-    asd = cd.scale_and_dBFS_specdata(asd, acc_len, dBFS)
+    # # Get real and imaginary data  of integrated cross-correlation
+    # crossre = cd.read_interleave_data(roach, reimbrams_list[0], spec_addr_width, spec_word_width, '>i8')
+    # crossim = cd.read_interleave_data(roach, reimbrams_list[1], spec_addr_width, spec_word_width, '>i8')
+    # crossre = np.delete(crossre, len(crossre) / 2)
+    # crossim = np.delete(crossim, len(crossim) / 2)
+    # asd = np.power(crossre, 2) + np.power(crossim, 2)
+    # asd = [math.sqrt(asd[j]) for j in range(len(crossdata))]
+    # asd = np.asarray(asd)
+    # # asd = asd / acc_len
 
     # Get score data
     bramscore = struct.unpack('>1024Q', roach.read(score_name_bram, 2 ** score_addr_width * score_word_width / 8))
@@ -110,6 +105,18 @@ def run(i):
     score = np.mean(scorelist)
     scoredata.append(score)
     t.append(i)
+
+    # Bin score plot
+    det_freqs = [freqs[i] for i in np.linspace(0, nchannels, n_bits, endpoint = False)]
+    det_data = [np.mean(crossdata[i:i+(nchannels/)]/acc_len)]
+
+    # asd = cd.scale_and_dBFS_specdata(asd, acc_len, dBFS)
+    crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
+    specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
+    specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+    multdata = [(specdata1[j] + specdata2[j]) / 2 for j in range(len(specdata1))]
+
+
 
     # Mean and STD calculations
     meanScore = np.mean(scoredata[-meanAcc:])
@@ -125,7 +132,7 @@ def run(i):
     lines[1].set_data(freqs, specdata2)
     lines[2].set_data(freqs, crossdata)
     lines[3].set_data(freqs, multdata)
-    lines[4].set_data(t, 10 * np.log10(scoredata))
+    lines[4].set_data(t, scoredata)
     lineDet.set_segments(detdata)
 
     # Updating detection plot horizontal limits

@@ -41,6 +41,7 @@ reimbrams_list = [['dout2_re0', 'dout2_re1', 'dout2_re2', 'dout2_re3',
 
 # experiment parameters
 acc_len = 2 ** 12
+n_bits = 2 ** 3
 
 # derivative parameters
 nchannels = 2 ** spec_addr_width * len(specbrams_list[0])
