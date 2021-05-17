@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
 # Parameters
 A = 10  # Amplitude
-freq = 300  # Signal frequency (Mhz)
+freq = 200  # Signal frequency (Mhz)
 phi = np.pi / 3  # Offset angle
 dataLen = 2 ** 12  # Size data
-accLen = 2 ** 10  # Integration length
+accLen = 2 ** 7  # Integration length
 snr = 20  # SNR (dB)
 fm = 1080.0  # Sampling rate (Mhz)
 
@@ -52,52 +52,68 @@ ylim = ((-80, 20))
 
 # Plot signal 1 PSD
 c = 10 * np.log10(PSD1[-1])
-plt.subplot(3, 2, 1)
+plt.subplot(4, 2, 1)
 plt.plot(f, c)
 plt.title("Main signal PSD")
 plt.xlabel("Frequency (Mhz)")
 plt.ylabel("Power (dB)")
 plt.ylim(ylim)
+plt.grid()
 plt.xlim((0, fm / 2))
 
 # Plot signal 2 PSD
 d = 10 * np.log10(PSD2[-1])
-plt.subplot(3, 2, 2)
+plt.subplot(4, 2, 2)
 plt.plot(f, d)
 plt.title("Reference signal PSD")
 plt.xlabel("Frequency (Mhz)")
 plt.ylabel("Power (dB)")
 plt.ylim(ylim)
+plt.grid()
 plt.xlim((0, fm / 2))
 
 # Plot instantaneous CPSD
 a = 10 * np.log10(np.abs(CPSD[-1]))
-plt.subplot(3, 1, 2)
+plt.subplot(4, 1, 2)
 plt.plot(f, a)
 plt.title("CPSD without integration")
 plt.xlabel("Frequency (Mhz)")
 plt.ylabel("Power (dB)")
 plt.ylim(ylim)
+plt.grid()
 plt.xlim((0, fm / 2))
 
 # Plot integrated CPSD module
 b = 10 * np.log10(np.abs(CPSDmean))
-plt.subplot(3, 2, 5)
+plt.subplot(4, 2, 5)
 plt.plot(f, b)
 plt.title("CPSD module after integration")
 plt.xlabel("Frequency (Mhz)")
 plt.ylabel("Power (dB)")
 plt.ylim(ylim)
+plt.grid()
 plt.xlim((0, fm / 2))
 
 # Plot CPSD integrated power
 e = 10 * np.log10(np.mean(np.abs(CPSD), 0))
-plt.subplot(3, 2, 6)
+plt.subplot(4, 2, 6)
 plt.plot(f, e)
 plt.title("CPSD module before integration")
 plt.xlabel("Frequency (Mhz)")
 plt.ylabel("Power (dB)")
 plt.ylim(ylim)
+plt.grid()
+plt.xlim((0, fm / 2))
+
+# Plot CPSD integrated power
+e = np.abs(CPSDmean) ** 2 / (PSD1mean * PSD2mean)
+plt.subplot(4, 2, 7)
+plt.plot(f, e)
+plt.title("CPSD Score")
+plt.xlabel("Frequency (Mhz)")
+plt.ylabel("Score")
+plt.ylim((-0.2,1.2))
+plt.grid()
 plt.xlim((0, fm / 2))
 
 print("Signal 1 Power")

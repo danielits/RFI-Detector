@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip = '192.168.1.12'
-boffile = 'detector.bof.gz'
+boffile = 'asd.bof.gz'
 
 # model parameters
 adc_bits = 8
@@ -13,6 +13,7 @@ bandwidth = 540  # MHz
 acc_len_reg = 'acc_len'
 cnt_rst_reg = 'cnt_rst'
 power_gain_reg = 'filter_gain'
+adq_trigger_reg = 'trigger'
 spec_addr_width = 7  # bits
 spec_word_width = 64  # bits
 spec_data_type = '>u8'
@@ -33,6 +34,9 @@ specbrams_list = [['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3',
 crossbrams_list = ['dout2_0', 'dout2_1', 'dout2_2', 'dout2_3',
                    'dout2_4', 'dout2_5', 'dout2_6', 'dout2_7']
 
+pows_list = ['dout3_0', 'dout3_1', 'dout3_2', 'dout3_3',
+                 'dout3_4', 'dout3_5', 'dout3_6', 'dout3_7']
+
 # Real and imaginary parts of integrated cross-corralation
 reimbrams_list = [['dout2_re0', 'dout2_re1', 'dout2_re2', 'dout2_re3',
                    'dout2_re4', 'dout2_re5', 'dout2_re6', 'dout2_re7'],
@@ -41,7 +45,7 @@ reimbrams_list = [['dout2_re0', 'dout2_re1', 'dout2_re2', 'dout2_re3',
 
 # experiment parameters
 acc_len = 2 ** 12
-n_bits = 2 ** 3
+n_bits = 2 ** 1
 
 # derivative parameters
 nchannels = 2 ** spec_addr_width * len(specbrams_list[0])

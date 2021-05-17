@@ -1,7 +1,6 @@
 import matplotlib
 import struct
 
-import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import Tkinter as tk
@@ -13,34 +12,53 @@ import math
 matplotlib.use("TkAgg")
 
 roach = cd.initialize_roach(roach_ip, boffile=boffile, upload=True)
-# roach = cd.initialize_roach('192.168.1.12')+
+# roach = cd.initialize_roach('192.168.1.12')
 roach.write_int(acc_len_reg, acc_len)
 roach.write_int(cnt_rst_reg, 1)
 roach.write_int(cnt_rst_reg, 0)
+roach.write_int(adq_trigger_reg, 1)
+roach.write_int(adq_trigger_reg, 0)
 
 root = tk.Tk()
+root.configure(bg='white')
 fig = Figure(figsize=(16, 8), dpi=120)
-fig.set_tight_layout(True)
+fig.set_tight_layout('True')
 ax1 = fig.add_subplot(321)
 ax2 = fig.add_subplot(322)
 ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
-ax5 = fig.add_subplot(313)
-axes = [ax1, ax2, ax3, ax4, ax5]
+ax6 = fig.add_subplot(325)
+axes = [ax1, ax2, ax3, ax4, ax6]
 titles = ["Primary signal",
           "Reference signal",
           "Cross-correlation magnitude after integration",
           "CPSD magnitude before integration (same as multiplied density power)",
-          "Total cross-correlated power"]
+          "Score bin"
+          ]
 lines = []
 scoredata = []
 detdata = []
 t = []
 
+button_frame = tk.Frame(master=root, bg="white")
+button_frame.pack(side=tk.TOP, anchor="w")  # ver si se tiene que quedar o no
+toggle_button = tk.Button(button_frame, text="Update data")
+
+
+def adquisition_toggle():
+    roach.write_int(adq_trigger_reg, 1)
+    roach.write_int(adq_trigger_reg, 0)
+
+
+toggle_button.config(command=adquisition_toggle)
+toggle_button.pack(side=tk.LEFT)
+score_label = tk.Label(button_frame, text="Hola", bg="white")
+score_label.pack(side=tk.LEFT)
+
 for ax in axes:
     line, = ax.plot([], [], 'c', lw=1.3)
     lines.append(line)
-lineDet = ax5.vlines([], 0, tempMax, 'r', lw=1.3)
+# lineDet = ax5.vlines([], 0, tempMax, 'r', lw=1.3)
 
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
@@ -59,10 +77,12 @@ def init():
         ax.set_ylabel('Power (dBFS)')
         ax.set_title(title)
         ax.grid()
-    ax5.set_xlabel('Time')
-    ax5.set_ylabel('Score')
-    ax5.set_ylim(0, tempMax)
-    ax5.set_xlim(0, 600)
+    # ax5.set_xlabel('Time')
+    # ax5.set_ylabel('Score')
+    # ax5.set_ylim(0, tempMax)
+    # ax5.set_xlim(0, 600)
+    ax6.set_ylabel('Score')
+    ax6.set_ylim(-0.2, 1.2)
     return lines
 
 
@@ -82,9 +102,20 @@ def run(i):
             crossdata.append(aux)
     crossdata = np.resize(crossdata, (len(crossbrams_list), len(crossdata) / len(crossbrams_list)))
     crossdata = np.vstack(crossdata).reshape((-1,), order='F')
-
-    crossdata = [math.sqrt(crossdata[j]) for j in range(len(crossdata))]
+    crossdata = [math.sqrt(crossdata[j]/2) for j in range(len(crossdata))] #Revisar el divido 2, por que es necesario
     crossdata = np.delete(crossdata, len(crossdata) / 2)
+
+    # Get principal and reference power spectral density multiplication
+    powsdata = []
+    for bram in pows_list:
+        bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
+        for j in np.arange(0, 256, 2):
+            aux = (bramdata[j] << 64) + bramdata[j + 1]
+            powsdata.append(aux)
+    powsdata = np.resize(powsdata, (len(crossbrams_list), len(powsdata) / len(crossbrams_list)))
+    powsdata = np.vstack(powsdata).reshape((-1,), order='F')
+    powsdata = [math.sqrt(powsdata[j]) for j in range(len(powsdata))]
+    powsdata = np.delete(powsdata, len(powsdata) / 2)
 
     # # Get real and imaginary data  of integrated cross-correlation
     # crossre = cd.read_interleave_data(roach, reimbrams_list[0], spec_addr_width, spec_word_width, '>i8')
@@ -97,18 +128,17 @@ def run(i):
     # # asd = asd / acc_len
 
     # Get score data
-    bramscore = struct.unpack('>1024Q', roach.read(score_name_bram, 2 ** score_addr_width * score_word_width / 8))
-    scorelist = []
-    for j in np.arange(0, 1024, 2):
-        aux = (bramscore[j] << 0) + bramscore[j + 1]
-        scorelist.append(aux)
-    score = np.mean(scorelist)
-    scoredata.append(score)
-    t.append(i)
+    # bramscore = struct.unpack('>1024Q', roach.read(score_name_bram, 2 ** score_addr_width * score_word_width / 8))
+    # scorelist = []
+    # for j in np.arange(0, 1024, 2):
+    #     aux = (bramscore[j] << 0) + bramscore[j + 1]
+    #     scorelist.append(aux)
+    # score = np.mean(scorelist)
+    # scoredata.append(score)
+    # t.append(i)
 
-    # Bin score plot
-    det_freqs = [freqs[i] for i in np.linspace(0, nchannels, n_bits, endpoint = False)]
-    det_data = [np.mean(crossdata[i:i+(nchannels/)]/acc_len)]
+    scoredatapy = crossdata / powsdata
+    score_label.configure(text="Score: " + str(np.max(scoredatapy))) # Update score label text value
 
     # asd = cd.scale_and_dBFS_specdata(asd, acc_len, dBFS)
     crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
@@ -116,28 +146,23 @@ def run(i):
     specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
     multdata = [(specdata1[j] + specdata2[j]) / 2 for j in range(len(specdata1))]
 
-
-
-    # Mean and STD calculations
-    meanScore = np.mean(scoredata[-meanAcc:])
-    stdScore = np.std(scoredata[-meanAcc:])
-
-    # Data to detection plot
-    if abs(score - meanScore) > threshFactor * stdScore:
-        detdata.append([[i, 0], [i, tempMax]])
-    # print("Detection decision: " + str(np.round(abs(score - meanScore),4)) + " > 3 * " + str(np.round(stdScore,4)))
+    roach.write_int(adq_trigger_reg, 1)
+    roach.write_int(adq_trigger_reg, 0)
 
     # Update fig lines
     lines[0].set_data(freqs, specdata1)
     lines[1].set_data(freqs, specdata2)
     lines[2].set_data(freqs, crossdata)
     lines[3].set_data(freqs, multdata)
-    lines[4].set_data(t, scoredata)
-    lineDet.set_segments(detdata)
+    # lines[4].set_data(t, scoredata)
+    lines[4].set_data(freqs, scoredatapy)
+    # lineDet.set_segments(detdata)
+    # print (max(crossdata), max(multdata))  # POR QUE HAY CASOS MAYORES QUE 1?, REVISAR
 
     # Updating detection plot horizontal limits
-    if i > 600:
-        ax5.set_xlim(i - 600, i)
+    # if i > 600:
+    #     ax5.set_xlim(i - 600, i)
+
     return lines
 
 
