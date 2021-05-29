@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip = '192.168.1.12'
-boffile = 'asd.bof.gz'
+boffile = 'detector_64bits_30delay.bof.gz'
 
 # model parameters
 adc_bits = 8
@@ -35,7 +35,10 @@ crossbrams_list = ['dout2_0', 'dout2_1', 'dout2_2', 'dout2_3',
                    'dout2_4', 'dout2_5', 'dout2_6', 'dout2_7']
 
 pows_list = ['dout3_0', 'dout3_1', 'dout3_2', 'dout3_3',
-                 'dout3_4', 'dout3_5', 'dout3_6', 'dout3_7']
+             'dout3_4', 'dout3_5', 'dout3_6', 'dout3_7']
+
+score_list = ['score_0', 'score_1', 'score_2', 'score_3',
+              'score_4', 'score_5', 'score_6', 'score_7']
 
 # Real and imaginary parts of integrated cross-corralation
 reimbrams_list = [['dout2_re0', 'dout2_re1', 'dout2_re2', 'dout2_re3',

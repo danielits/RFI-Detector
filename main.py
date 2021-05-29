@@ -1,6 +1,7 @@
 import matplotlib
 import struct
 
+import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import Tkinter as tk
@@ -59,6 +60,8 @@ for ax in axes:
     line, = ax.plot([], [], 'c', lw=1.3)
     lines.append(line)
 # lineDet = ax5.vlines([], 0, tempMax, 'r', lw=1.3)
+lines[4], = ax6.plot([], [], 'r', lw=1.3)
+lineScore, = ax6.plot([], [], 'c', lw=1.3)
 
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
@@ -93,75 +96,75 @@ def run(i):
     specdata1 = np.delete(specdata1, len(specdata1) / 2)
     specdata2 = np.delete(specdata2, len(specdata2) / 2)
 
-    # Get cross-correlation and **power multiplied data**
-    crossdata = []
-    for bram in crossbrams_list:
-        bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
-        for j in np.arange(0, 256, 2):
-            aux = (bramdata[j] << 64) + bramdata[j + 1]
-            crossdata.append(aux)
-    crossdata = np.resize(crossdata, (len(crossbrams_list), len(crossdata) / len(crossbrams_list)))
-    crossdata = np.vstack(crossdata).reshape((-1,), order='F')
-    crossdata = [math.sqrt(crossdata[j]/2) for j in range(len(crossdata))] #Revisar el divido 2, por que es necesario
+    crossdata = cd.read_interleave_data(roach, crossbrams_list, spec_addr_width, spec_word_width, spec_data_type)
+    crossdata = crossdata / 2 #  Creo que agrego un bit mas en la parte decimal de cmult del modelo, revisar
+    powsdata = cd.read_interleave_data(roach, pows_list, spec_addr_width, spec_word_width, spec_data_type)
     crossdata = np.delete(crossdata, len(crossdata) / 2)
-
-    # Get principal and reference power spectral density multiplication
-    powsdata = []
-    for bram in pows_list:
-        bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
-        for j in np.arange(0, 256, 2):
-            aux = (bramdata[j] << 64) + bramdata[j + 1]
-            powsdata.append(aux)
-    powsdata = np.resize(powsdata, (len(crossbrams_list), len(powsdata) / len(crossbrams_list)))
-    powsdata = np.vstack(powsdata).reshape((-1,), order='F')
-    powsdata = [math.sqrt(powsdata[j]) for j in range(len(powsdata))]
     powsdata = np.delete(powsdata, len(powsdata) / 2)
 
-    # # Get real and imaginary data  of integrated cross-correlation
-    # crossre = cd.read_interleave_data(roach, reimbrams_list[0], spec_addr_width, spec_word_width, '>i8')
-    # crossim = cd.read_interleave_data(roach, reimbrams_list[1], spec_addr_width, spec_word_width, '>i8')
-    # crossre = np.delete(crossre, len(crossre) / 2)
-    # crossim = np.delete(crossim, len(crossim) / 2)
-    # asd = np.power(crossre, 2) + np.power(crossim, 2)
-    # asd = [math.sqrt(asd[j]) for j in range(len(crossdata))]
-    # asd = np.asarray(asd)
-    # # asd = asd / acc_len
+    vartemp = 30
+    crossdata = np.trunc(crossdata / 2 ** vartemp ) * 2 ** vartemp
+    powsdata = np.trunc(powsdata / 2 ** vartemp) * 2 ** vartemp
 
-    # Get score data
-    # bramscore = struct.unpack('>1024Q', roach.read(score_name_bram, 2 ** score_addr_width * score_word_width / 8))
-    # scorelist = []
-    # for j in np.arange(0, 1024, 2):
-    #     aux = (bramscore[j] << 0) + bramscore[j + 1]
-    #     scorelist.append(aux)
-    # score = np.mean(scorelist)
-    # scoredata.append(score)
-    # t.append(i)
+    crossdata = crossdata * (2 ** 10)
+    powsdata = powsdata * (2 ** 10)
 
-    scoredatapy = crossdata / powsdata
-    score_label.configure(text="Score: " + str(np.max(scoredatapy))) # Update score label text value
+    scoretemp = cd.read_interleave_data(roach, score_list, spec_addr_width, spec_word_width, spec_data_type)
+    scoretemp = (np.delete(scoretemp, len(scoretemp) / 2)) / 2 ** 29
 
-    # asd = cd.scale_and_dBFS_specdata(asd, acc_len, dBFS)
-    crossdata = cd.scale_and_dBFS_specdata(crossdata, acc_len, dBFS)
-    specdata1 = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
-    specdata2 = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
-    multdata = [(specdata1[j] + specdata2[j]) / 2 for j in range(len(specdata1))]
+    # # Get cross-correlation and **power multiplied data**
+    # crossdata = []
+    # for bram in crossbrams_list:
+    #     bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
+    #     for j in np.arange(0, 256, 2):
+    #         aux = (bramdata[j] << 64) + bramdata[j + 1]
+    #         crossdata.append(aux)
+    # crossdata = np.resize(crossdata, (len(crossbrams_list), len(crossdata) / len(crossbrams_list)))
+    # crossdata = np.vstack(crossdata).reshape((-1,), order='F')
+    # crossdata = [crossdata[j]/2 for j in range(len(crossdata))] #Revisar el divido 2, por que es necesario
+    # crossdata = np.delete(crossdata, len(crossdata) / 2)
+    #
+    # # Get principal and reference power spectral density multiplication
+    # powsdata = []
+    # for bram in pows_list:
+    #     bramdata = struct.unpack('>256Q', roach.read(bram, 2 ** speccross_addr_width * speccross_word_width / 8))
+    #     for j in np.arange(0, 256, 2):
+    #         aux = (bramdata[j] << 64) + bramdata[j + 1]
+    #         powsdata.append(aux)
+    # powsdata = np.resize(powsdata, (len(crossbrams_list), len(powsdata) / len(crossbrams_list)))
+    # powsdata = np.vstack(powsdata).reshape((-1,), order='F')
+    # powsdata = np.delete(powsdata, len(powsdata) / 2)
+
+    scoredata = 1.0 * crossdata / powsdata
+    score_label.configure(text="Score: " + str(np.max(scoredata))) # Update score label text value
+
+    specdata1db = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
+    specdata2db = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+    multdatadb = [(specdata1db[j] + specdata2db[j]) / 2 for j in range(len(specdata1db))]
+    crossdatadb = cd.scale_and_dBFS_specdata(np.sqrt(np.asarray(crossdata, dtype=float)), acc_len, dBFS)
+    powsdatadb = cd.scale_and_dBFS_specdata(np.sqrt(np.asarray(powsdata, dtype=float)), acc_len, dBFS)
 
     roach.write_int(adq_trigger_reg, 1)
     roach.write_int(adq_trigger_reg, 0)
 
     # Update fig lines
-    lines[0].set_data(freqs, specdata1)
-    lines[1].set_data(freqs, specdata2)
-    lines[2].set_data(freqs, crossdata)
-    lines[3].set_data(freqs, multdata)
+    lines[0].set_data(freqs, specdata1db)
+    lines[1].set_data(freqs, specdata2db)
+    lines[2].set_data(freqs, crossdatadb)
+    lines[3].set_data(freqs, powsdatadb)
     # lines[4].set_data(t, scoredata)
-    lines[4].set_data(freqs, scoredatapy)
-    # lineDet.set_segments(detdata)
-    # print (max(crossdata), max(multdata))  # POR QUE HAY CASOS MAYORES QUE 1?, REVISAR
+    lineScore.set_data(freqs, scoretemp)
+    lines[4].set_data(freqs, scoredata)
 
-    # Updating detection plot horizontal limits
-    # if i > 600:
-    #     ax5.set_xlim(i - 600, i)
+    k = 0
+    for i in scoretemp:
+
+        if i >0.1:
+            k+=1
+
+    print k
+
+    # lineDet.set_segments(detdata)
 
     return lines
 
