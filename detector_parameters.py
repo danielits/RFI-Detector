@@ -5,14 +5,14 @@ import numpy as np
 
 # communication parameters
 roach_ip = '192.168.1.12'
-boffile = 'detector_64bits_30delay.bof.gz'
+boffile = 'score_detector_2021_May_30_0135.bof.gz'
 
 # model parameters
 adc_bits = 8
 bandwidth = 540  # MHz
 acc_len_reg = 'acc_len'
 cnt_rst_reg = 'cnt_rst'
-power_gain_reg = 'filter_gain'
+detector_gain_reg = 'detector_gain'
 adq_trigger_reg = 'trigger'
 spec_addr_width = 7  # bits
 spec_word_width = 64  # bits
@@ -40,23 +40,13 @@ pows_list = ['dout3_0', 'dout3_1', 'dout3_2', 'dout3_3',
 score_list = ['score_0', 'score_1', 'score_2', 'score_3',
               'score_4', 'score_5', 'score_6', 'score_7']
 
-# Real and imaginary parts of integrated cross-corralation
-reimbrams_list = [['dout2_re0', 'dout2_re1', 'dout2_re2', 'dout2_re3',
-                   'dout2_re4', 'dout2_re5', 'dout2_re6', 'dout2_re7'],
-                  ['dout2_im0', 'dout2_im1', 'dout2_im2', 'dout2_im3',
-                   'dout2_im4', 'dout2_im5', 'dout2_im6', 'dout2_im7']]
 
 # experiment parameters
 acc_len = 2 ** 12
-n_bits = 2 ** 1
+detector_gain = 2 ** 12
 
 # derivative parameters
 nchannels = 2 ** spec_addr_width * len(specbrams_list[0])
 freqs = np.linspace(0, bandwidth, nchannels, endpoint=False)  # MHz
 freqs = np.delete(freqs, len(freqs) / 2)
 dBFS = 6.02 * adc_bits + 1.76 + 10 * np.log10(nchannels)
-
-# dondani parameters
-meanAcc = 2 ** 4
-threshFactor = 5
-tempMax = 200  # Calcular, es la altura de la linea horizontal cuando hay deteccion
