@@ -1,6 +1,7 @@
 import matplotlib
 import struct
 import numexpr
+import time
 
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -31,17 +32,20 @@ ax2 = fig.add_subplot(322)
 ax3 = fig.add_subplot(323)
 ax4 = fig.add_subplot(324)
 ax5 = fig.add_subplot(325)
-axes = [ax1, ax2, ax3, ax4, ax5]
+ax6 = fig.add_subplot(326)
+axes = [ax1, ax2, ax3, ax4, ax5, ax6]
 titles = ["Primary signal",
           "Reference signal",
           "Cross-correlation magnitude after integration",
           "CPSD magnitude before integration (same as multiplied density power)",
-          "Score bin"
+          "Score bins",
+          "Sum of channel scores"
           ]
 lines = []
 scoredata = []
 detdata = []
 t = []
+scoresum = []
 
 
 def add_reg_entry(roach, root, reg):
@@ -121,6 +125,10 @@ def init():
         ax.set_ylabel('Power (dBFS)')
         ax.set_title(title)
         ax.grid()
+    ax6.set_ylim((0, nchannels))
+    ax6.set_xlim(0, 60)
+    ax6.set_ylabel('Sum score')
+    ax6.set_xlabel('Time (s)')
     ax5.set_ylabel('Score')
     ax5.set_ylim(-0.2, 1.6)
     return lines
@@ -150,6 +158,9 @@ def run(i):
     crossdatadb = cd.scale_and_dBFS_specdata(np.sqrt(np.asarray(crossdata, dtype=float)), acc_len, dBFS)
     powsdatadb = cd.scale_and_dBFS_specdata(np.sqrt(np.asarray(powsdata, dtype=float)), acc_len, dBFS)
 
+    t.append(time.time() - time_start)
+    scoresum.append(np.sum(scoredata))
+
     roach.write_int(adq_trigger_reg, 1)
     roach.write_int(adq_trigger_reg, 0)
 
@@ -161,9 +172,10 @@ def run(i):
     # lines[3].set_data(freqs, multdatadb)
     lineScore.set_data(freqs, scoredata)
     # lines[4].set_data(freqs, scorepy)
-
+    lines[5].set_data(t, scoresum)
 
     return lines
 
+time_start = time.time()
 ani = animation.FuncAnimation(fig, run, interval=10, init_func=init)
 root.mainloop()
