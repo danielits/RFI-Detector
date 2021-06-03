@@ -47,18 +47,18 @@ t = []
 def add_reg_entry(roach, root, reg):
 
     # add frame
-    frame = tk.Frame(master=root)
+    frame = tk.Frame(master=root, bg="white")
     frame.pack(side = tk.TOP, anchor="w")
     # add label
-    label = tk.Label(frame, text=reg+":")
+    label = tk.Label(frame, text=reg+":", bg="white")
     label.pack(side=tk.LEFT)
     # add entry
-    entry = tk.Entry(frame)
+    entry = tk.Entry(frame, bg="white")
     entry.insert(tk.END, roach.read_uint(reg))
     entry.pack(side=tk.LEFT)
-    button_double = tk.Button(frame, text='x2', command=lambda: double_reg())
+    button_double = tk.Button(frame, text='x2', command=lambda: double_reg(), bg="white")
     button_double.pack(side=tk.LEFT)
-    button_half = tk.Button(frame, text='/2', command=lambda: half_reg())
+    button_half = tk.Button(frame, text='/2', command=lambda: half_reg(), bg="white")
     button_half.pack(side=tk.LEFT)
 
     def double_reg():
@@ -66,16 +66,16 @@ def add_reg_entry(roach, root, reg):
         entry.delete(0, "end")
         entry.insert(0, val)
         roach.write_int(reg, val)
-        global detector_gain
-        detector_gain = val
+        roach.write_int(cnt_rst_reg, 1)
+        roach.write_int(cnt_rst_reg, 0)
 
     def half_reg():
         val = int(numexpr.evaluate(entry.get())) / 2
         entry.delete(0, "end")
         entry.insert(0, val)
         roach.write_int(reg, val)
-        global detector_gain
-        detector_gain = val
+        roach.write_int(cnt_rst_reg, 1)
+        roach.write_int(cnt_rst_reg, 0)
 
     def set_reg_from_entry():
         string_val = entry.get()
@@ -88,7 +88,10 @@ def add_reg_entry(roach, root, reg):
         roach.write_int(reg, val)
         global detector_gain
         detector_gain = val
+        roach.write_int(cnt_rst_reg, 1)
+        roach.write_int(cnt_rst_reg, 0)
     entry.bind('<Return>', lambda x: set_reg_from_entry())
+
 
 add_reg_entry(roach, root, acc_len_reg)
 add_reg_entry(roach, root, detector_gain_reg)
@@ -100,7 +103,6 @@ for ax in axes:
 # lineDet = ax5.vlines([], 0, tempMax, 'r', lw=1.3)
 lines[4], = ax5.plot([], [], 'r', lw=1.3)
 lineScore, = ax5.plot([], [], 'c', lw=1.3)
-ax5.set_ylim((-0.2,1.6))
 
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.draw()
@@ -125,6 +127,8 @@ def init():
 
 
 def run(i):
+    acc_len = roach.read_uint(acc_len_reg)
+    detector_gain = roach.read_uint(detector_gain_reg)
     # Get spectrometers data
     specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
     specdata2 = cd.read_interleave_data(roach, specbrams_list[1], spec_addr_width, spec_word_width, spec_data_type)
@@ -133,12 +137,12 @@ def run(i):
 
     crossdata = cd.read_interleave_data(roach, crossbrams_list, spec_addr_width, spec_word_width, spec_data_type) * (2 ** 56 / detector_gain ** 2)
     powsdata = cd.read_interleave_data(roach, pows_list, spec_addr_width, spec_word_width, spec_data_type) * (2 ** 56 / detector_gain ** 2)
-    scoretemp = cd.read_interleave_data(roach, score_list, spec_addr_width, spec_word_width, spec_data_type) / 2 ** 28
+    scoredata = cd.read_interleave_data(roach, score_list, spec_addr_width, spec_word_width, spec_data_type) / 2 ** 28
     crossdata = np.delete(crossdata, len(crossdata) / 2)
     powsdata = np.delete(powsdata, len(powsdata) / 2)
-    scoretemp = (np.delete(scoretemp, len(scoretemp) / 2))
+    scoredata = (np.delete(scoredata, len(scoredata) / 2))
 
-    scoredata = 1.0 * crossdata / powsdata
+    scorepy = 1.0 * crossdata / powsdata
 
     specdata1db = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
     specdata2db = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
@@ -155,8 +159,9 @@ def run(i):
     lines[2].set_data(freqs, crossdatadb)
     lines[3].set_data(freqs, powsdatadb)
     # lines[3].set_data(freqs, multdatadb)
-    # lineScore.set_data(freqs, scoretemp)
-    lines[4].set_data(freqs, scoredata)
+    lineScore.set_data(freqs, scoredata)
+    # lines[4].set_data(freqs, scorepy)
+
 
     return lines
 

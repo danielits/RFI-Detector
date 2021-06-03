@@ -43,7 +43,7 @@ score_list = ['score_0', 'score_1', 'score_2', 'score_3',
 
 # experiment parameters
 acc_len = 2 ** 12
-detector_gain = 2 ** 12
+detector_gain = 2 ** 14
 
 # derivative parameters
 nchannels = 2 ** spec_addr_width * len(specbrams_list[0])
