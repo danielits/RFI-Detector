@@ -15,7 +15,7 @@ import math
 matplotlib.use("TkAgg")
 
 roach = cd.initialize_roach(roach_ip, boffile=boffile, upload=True)
-# roach = cd.initialize_roach('192.168.1.12')
+# roach = cd.initialize_roach(roach_ip)
 roach.write_int(acc_len_reg, acc_len)
 roach.write_int(detector_gain_reg, detector_gain)
 roach.write_int(cnt_rst_reg, 1)
@@ -36,10 +36,10 @@ ax6 = fig.add_subplot(326)
 axes = [ax1, ax2, ax3, ax4, ax5, ax6]
 titles = ["Primary signal",
           "Reference signal",
-          "Cross-correlation magnitude after integration",
-          "CPSD magnitude before integration (same as multiplied density power)",
-          "Score bins",
-          "Sum of channel scores"
+          "Crosscorr magnitude after integration",
+          "Crosscorr magnitude before integration",
+          "Channel scores",
+          "Channel scores sum"
           ]
 lines = []
 scoredata = []
@@ -81,22 +81,6 @@ def add_reg_entry(roach, root, reg):
         roach.write_int(cnt_rst_reg, 1)
         roach.write_int(cnt_rst_reg, 0)
 
-    def set_reg_from_entry():
-        string_val = entry.get()
-        try:
-            val = int(numexpr.evaluate(string_val))
-        except:
-            raise Exception('Unable to parse value in textbox: '
-                + string_val)
-        print("Set reg " + reg + " to value " + str(val))
-        roach.write_int(reg, val)
-        global detector_gain
-        detector_gain = val
-        roach.write_int(cnt_rst_reg, 1)
-        roach.write_int(cnt_rst_reg, 0)
-    entry.bind('<Return>', lambda x: set_reg_from_entry())
-
-
 add_reg_entry(roach, root, acc_len_reg)
 add_reg_entry(roach, root, detector_gain_reg)
 
@@ -105,7 +89,6 @@ for ax in axes:
     line, = ax.plot([], [], 'c', lw=1.3)
     lines.append(line)
 # lineDet = ax5.vlines([], 0, tempMax, 'r', lw=1.3)
-lines[4], = ax5.plot([], [], 'r', lw=1.3)
 lineScore, = ax5.plot([], [], 'c', lw=1.3)
 
 canvas = FigureCanvasTkAgg(fig, master=root)
@@ -130,7 +113,7 @@ def init():
     ax6.set_ylabel('Sum score')
     ax6.set_xlabel('Time (s)')
     ax5.set_ylabel('Score')
-    ax5.set_ylim(-0.2, 1.6)
+    ax5.set_ylim(-0.2, 1.2)
     return lines
 
 
@@ -169,12 +152,14 @@ def run(i):
     lines[1].set_data(freqs, specdata2db)
     lines[2].set_data(freqs, crossdatadb)
     lines[3].set_data(freqs, powsdatadb)
-    # lines[3].set_data(freqs, multdatadb)
-    lineScore.set_data(freqs, scoredata)
-    # lines[4].set_data(freqs, scorepy)
+    # lineScore.set_data(freqs, scoredata)
+    lines[4].set_data(freqs, scoredata)
     lines[5].set_data(t, scoresum)
 
+    if t[-1] > 60:
+        ax6.set_xlim(t[-1] - 60, t[-1])
     return lines
+
 
 time_start = time.time()
 ani = animation.FuncAnimation(fig, run, interval=10, init_func=init)
