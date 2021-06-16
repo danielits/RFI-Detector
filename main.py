@@ -126,8 +126,8 @@ def run(i):
     specdata1 = np.delete(specdata1, len(specdata1) / 2)
     specdata2 = np.delete(specdata2, len(specdata2) / 2)
 
-    crossdata = cd.read_interleave_data(roach, crossbrams_list, spec_addr_width, spec_word_width, spec_data_type) * (2 ** 56 / detector_gain ** 2)
-    powsdata = cd.read_interleave_data(roach, pows_list, spec_addr_width, spec_word_width, spec_data_type) * (2 ** 56 / detector_gain ** 2)
+    crossdata = cd.read_interleave_data(roach, crossbrams_list, spec_addr_width, spec_word_width, spec_data_type) * (2 ** 56 / detector_gain ** 2 ) /2
+    powsdata = cd.read_interleave_data(roach, pows_list, spec_addr_width, spec_word_width, spec_data_type) * (2 ** 56 / detector_gain ** 2 )
     scoredata = cd.read_interleave_data(roach, score_list, spec_addr_width, spec_word_width, spec_data_type) / 2 ** 28
     crossdata = np.delete(crossdata, len(crossdata) / 2)
     powsdata = np.delete(powsdata, len(powsdata) / 2)
@@ -152,7 +152,7 @@ def run(i):
     lines[1].set_data(freqs, specdata2db)
     lines[2].set_data(freqs, crossdatadb)
     lines[3].set_data(freqs, powsdatadb)
-    # lineScore.set_data(freqs, scoredata)
+    lineScore.set_data(freqs, scorepy)
     lines[4].set_data(freqs, scoredata)
     lines[5].set_data(t, scoresum)
 

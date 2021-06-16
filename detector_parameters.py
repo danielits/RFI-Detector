@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip = '192.168.1.12'
-boffile = 'score_detector_2021_May_30_0135.bof.gz'
+boffile = 'detector_sinscore_2021_Jun_13_2247.bof.gz'
 
 # model parameters
 adc_bits = 8
@@ -43,7 +43,7 @@ score_list = ['score_0', 'score_1', 'score_2', 'score_3',
 
 # experiment parameters
 acc_len = 2 ** 12
-detector_gain = 2 ** 14
+detector_gain = 2 ** 15
 
 # derivative parameters
 nchannels = 2 ** spec_addr_width * len(specbrams_list[0])
