@@ -1,0 +1,9 @@
+usar pulsera antiestatica cada vez que manipule algo	
+revisar polaridad conector banana
+limitar corriente fuente de voltaje
+unir tierras
+apagar fuente de señales antes que la alimentacion de los amplificadores
+ver limites de potencia, banda de frecuencia y potencia de salida de cada dispositivo
+ocupar llave de torque para apretar con cuidado en los conectores SMA
+probar continuidad con el multimetro para verificar las conexiones
+GND Y VCC DE AMPLIFICADORES CHINOS PUEDEN HACER CORTO SI SE PONEN SOBRE EL PLANO DE TIERRA SIN SEPARACION
