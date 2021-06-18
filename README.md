@@ -1,1 +1,1 @@
-# FRB-Detector
+# RFI-Detector
