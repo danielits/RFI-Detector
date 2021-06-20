@@ -14,8 +14,12 @@ import math
 
 matplotlib.use("TkAgg")
 
+if calibrate == 1:
+    calibrate_adcs_visa(roach_ip, '', bandwidth, gen_freq=10, gen_pow=-4, manual=1)
+
 roach = cd.initialize_roach(roach_ip, boffile=boffile, upload=True)
 # roach = cd.initialize_roach('192.168.1.12')
+
 roach.write_int(acc_len_reg, acc_len)
 #roach.write_int(detector_gain_reg, detector_gain)
 roach.write_int(cnt_rst_reg, 1)
@@ -91,7 +95,7 @@ def add_reg_entry(roach, root, reg):
 
 
 add_reg_entry(roach, root, acc_len_reg)
-#add_reg_entry(roach, root, detector_gain_reg)
+add_reg_entry(roach, root, detector_gain_reg)
 
 for ax in axes:
     line, = ax.plot([], [], 'c', lw=1.3)
@@ -124,21 +128,21 @@ def init():
 def run(i):
     # Update values from register
     acc_len = roach.read_uint(acc_len_reg)
-    #detector_gain = roach.read_uint(detector_gain_reg)
+    detector_gain = roach.read_uint(detector_gain_reg)
 
     # Spectrometer data
     pow_factor = pwr_sliced_bits - detector_gain
     specdata1 = cd.read_interleave_data(roach, specbrams_list[0], spec_addr_width, spec_word_width, spec_data_type)
-    #specdata2 = (cd.read_interleave_data(roach, specbrams_list[1], score_addr_width, score_word_width,
-     #                                    score_data_type)) * (2 ** (pow_factor))
+    specdata2 = (cd.read_interleave_data(roach, specbrams_list[1], score_addr_width, score_word_width,
+                                        score_data_type)) * (2 ** (pow_factor))
     specdata1 = np.delete(specdata1, len(specdata1) / 2)
-    #specdata2 = np.delete(specdata2, len(specdata2) / 2)
+    specdata2 = np.delete(specdata2, len(specdata2) / 2)
     specdata1db = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
-    #specdata2db = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+    specdata2db = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
 
     # Update fig lines
     lines[0].set_data(freqs, specdata1db)
-   # lines[1].set_data(freqs, specdata2db)
+    lines[1].set_data(freqs, specdata2db)
 
     # Update rectangle patch
     y0 = 10 * np.log10(2 ** (pow_factor - np.log2(acc_len))) - dBFS
