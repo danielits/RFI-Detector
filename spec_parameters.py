@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip = '192.168.1.12'
-boffile = 'spec1in_2048ch_600mhz.bof.gz'
+boffile = 'rfidet_2048ch_600mhz.bof.gz'
 # boffile = 'spectrometerv2.bof.gz'
 
 
