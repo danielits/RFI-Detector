@@ -5,7 +5,7 @@ import numpy as np
 
 # communication parameters
 roach_ip = '192.168.1.12'
-boffile = 'rfidet_2048ch_600mhz.bof.gz'
+boffile = 'rfidet_div.bof.gz'
 
 # model parameters
 adc_bits = 8
@@ -33,11 +33,12 @@ score_names = [['dout_num_0', 'dout_num_1', 'dout_num_2', 'dout_num_3'],        
 
 # experiment parameters
 acc_len = 2 ** 12
-detector_gain = 31
+detector_gain = 37
 pwr_sliced_bits = 45
 
 # derivative parameters
 nchannels = 2 ** spec_addr_width * len(specs_names[0])
 freqs = np.linspace(0, bandwidth, nchannels, endpoint=False)  # MHz
 freqs = np.delete(freqs, len(freqs) / 2)
+freqs = [x+1200 for x in freqs]
 dBFS = 6.02 * adc_bits + 1.76 + 10 * np.log10(nchannels)
