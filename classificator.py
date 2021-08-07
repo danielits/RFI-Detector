@@ -39,11 +39,10 @@ for i in data.T:
 stats = stats.describe(data, axis=1)
 stats = np.stack([stats[1][0], stats[1][1], stats[2], stats[3], stats[4], stats[5]], axis=1)
 scaled_stats = stats
-# scaled_stats = preprocessing.scale(stats, axis=0)
-pca = PCA(n_components=2)
+scaled_stats = preprocessing.scale(stats, axis=0)
+pca = PCA()
 pca.fit(scaled_stats)
-pca_data = pca.transform(scaled_stats)
-scaled_stats = pca_data
+scaled_stats = pca.transform(scaled_stats)
 
 
 # per_var = np.round(pca.explained_variance_ratio_* 100, decimals=1)
@@ -56,18 +55,29 @@ scaled_stats = pca_data
 
 x1=[]
 x2=[]
+x3=[]
 y1=[]
 y2=[]
-for i in range(0, len(pca_data)):
+y3=[]
+temp = np.mean(data.T[0][1:])
+temp1 = 0
+temp2 = 1
+for i in range(0, len(scaled_stats)):
     if score[i] > 0.4:
-        x1.append(scaled_stats[i][0])
-        y1.append(scaled_stats[i][1])
+        if np.mean(data.T[i][1:]) >= temp * 1.3:
+            x1.append(scaled_stats[i][temp1])
+            y1.append(scaled_stats[i][temp2])
+        else:
+            x3.append(scaled_stats[i][temp1])
+            y3.append(scaled_stats[i][temp2])
     else:
-        x2.append(scaled_stats[i][0])
-        y2.append(scaled_stats[i][1])
+        x2.append(scaled_stats[i][temp1])
+        y2.append(scaled_stats[i][temp2])
+    temp = np.mean(data.T[i][1:])
 
-plt.scatter(x1, y1 ,s = 10, c='r', alpha=0.5, label='Detection')
-plt.scatter(x2, y2 ,s = 10, c='b', alpha=0.5, label='No detection')
+plt.scatter(x2, y2 ,s = 20, c='b', alpha=1, label='No detection')
+plt.scatter(x1, y1 ,s = 20, c='r', alpha=1, label='Detection broadband')
+plt.scatter(x3, y3 ,s = 20, c='g', alpha=1, label='Detection narrowband')
 plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.legend()
