@@ -1,5 +1,4 @@
 import matplotlib
-import numexpr
 import math
 import pandas as pd
 import time
@@ -9,7 +8,26 @@ from matplotlib.figure import Figure
 import Tkinter as tk
 from matplotlib import animation
 from detector_parameters import *
-import calandigital as cd
+
+def scale_and_dBFS_specdata(data, acclen, dBFS):
+    """
+    Scales spectral data by an accumulation length, and converts
+    the data to dBFS. Used for plotting spectra.
+    :param data: spectral data to convert. Must be Numpy array.
+    :param acclen: accumulation length of spectrometer.
+        Used to scale the data.
+    :param dBFS: amount to shift the dB data is shifted in order
+        to converted it to dBFS. It is usually computed as:
+        dBFS = 6.02 adc_bits + 10*log10(spec_channels)
+    :return: scaled data in dBFS.
+    """
+    # scale data
+    data = data / float(acclen)
+
+    # convert data to dBFS
+    data = 10*np.log10(data+1) - dBFS
+
+    return data
 
 matplotlib.use("TkAgg")
 
@@ -114,12 +132,12 @@ def run(i):
     score_der_last = scoredata
 
     # Normalize data by acc_len and convert to dBFS
-    specdata1db = cd.scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
-    specdata2db = cd.scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
-    specdata_sl1db = cd.scale_and_dBFS_specdata(specdata_sl1, acc_len, dBFS)
-    specdata_sl2db = cd.scale_and_dBFS_specdata(specdata_sl2, acc_len, dBFS)
-    numdatadb = cd.scale_and_dBFS_specdata(numdata, acc_len, dBFS)
-    denomdatadb = cd.scale_and_dBFS_specdata(denomdata, acc_len, dBFS)
+    specdata1db = scale_and_dBFS_specdata(specdata1, acc_len, dBFS)
+    specdata2db = scale_and_dBFS_specdata(specdata2, acc_len, dBFS)
+    specdata_sl1db = scale_and_dBFS_specdata(specdata_sl1, acc_len, dBFS)
+    specdata_sl2db = scale_and_dBFS_specdata(specdata_sl2, acc_len, dBFS)
+    numdatadb = scale_and_dBFS_specdata(numdata, acc_len, dBFS)
+    denomdatadb = scale_and_dBFS_specdata(denomdata, acc_len, dBFS)
 
     # Power Spectral Density full bits, the product and squared root are calculated in python
     multdatadb = [(specdata1db[j] + specdata2db[j]) / 2 for j in range(len(specdata1db))]
@@ -160,5 +178,5 @@ def run(i):
 
 
 time_start = time.time()
-ani = animation.FuncAnimation(fig, run, interval=10, init_func=init)
+ani = animation.FuncAnimation(fig, run, interval=1000, init_func=init)
 root.mainloop()
